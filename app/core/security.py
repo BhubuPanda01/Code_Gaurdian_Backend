@@ -6,7 +6,7 @@ from passlib.context import CryptContext
 
 from app.core.config import settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -14,7 +14,11 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
+    hashed = pwd_context.hash(password)
+    # Defensive: ensure we always store a str in Postgres
+    if isinstance(hashed, bytes):
+        return hashed.decode("utf-8")
+    return str(hashed)
 
 
 def create_access_token(subject: str | Any, expires_delta: Optional[timedelta] = None) -> str:

@@ -18,6 +18,14 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24
 
+    # Auth cookie (optional, for browser-friendly auth)
+    AUTH_COOKIE_NAME: str = "access_token"
+    AUTH_COOKIE_SECURE: bool = False  # set True in production (HTTPS)
+    AUTH_COOKIE_SAMESITE: str = "lax"  # "lax" is good default for same-site apps
+
+    # CORS (comma-separated). Must be explicit origins when using cookies.
+    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
+
     class Config:
         env_file = ".env"
         case_sensitive = True
