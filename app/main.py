@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from app.config import API_TITLE, API_VERSION, API_DESCRIPTION
 from app.database import engine, Base
 from app.routes.user_routes import router as user_router
+from app.routes.analyze_routes import router as analyze_router
 from fastapi.middleware.cors import CORSMiddleware
 
 # Create database tables
@@ -32,6 +33,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(user_router)
+app.include_router(analyze_router)
 
 
 @app.get("/health")
