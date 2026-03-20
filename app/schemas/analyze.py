@@ -45,3 +45,14 @@ class JobResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class JobResultResponse(BaseModel):
+    """Response schema for job result data"""
+    job_id: str
+    status: str
+    result: Optional[dict] = None
+    error_message: Optional[str] = None
+
+    class Config:
+        from_attributes = True

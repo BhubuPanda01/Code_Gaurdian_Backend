@@ -47,21 +47,17 @@ def create_analysis_job(db: Session, analyze_request: AnalyzeRequest) -> tuple[b
         db.commit()
         db.refresh(db_job)
         
-        # Push job to queue
+        # Push job to queue with both db and external job identifiers
         job_data = {
             'github_url': normalized_url,
             'repository_name': repository_name,
-            'database_job_id': db_job.id
+            'database_job_id': db_job.id,
+            'job_id': db_job.job_id
         }
         
         job_queue.push_job(job_data)
         
-        # Update job_id in database
-        # db_job.job_id = db_job.id  # Initialize with a simple ID
-        # db.commit()
-        # db.refresh(db_job)
-        
-        return True, str(db_job.id), "Analysis job created successfully"
+        return True, db_job.job_id, "Analysis job created successfully"
     
     except IntegrityError:
         db.rollback()
@@ -108,6 +104,33 @@ def get_job_by_id(db: Session, job_id: int) -> dict:
             'success': False,
             'message': f'Error retrieving job: {str(e)}'
         }
+
+
+def get_job_result(db: Session, job_id: int) -> dict:
+    """Get only result payload for a job"""
+    try:
+        job = db.query(Job).filter(Job.id == job_id).first()
+        if not job:
+            return {'success': False, 'message': f'Job with ID {job_id} not found'}
+
+        result_payload = None
+        if job.result:
+            try:
+                result_payload = json.loads(job.result)
+            except (ValueError, TypeError):
+                result_payload = {'raw': job.result}
+
+        return {
+            'success': True,
+            'data': {
+                'job_id': job.job_id,
+                'status': job.status.value,
+                'result': result_payload,
+                'error_message': job.error_message,
+            }
+        }
+    except Exception as e:
+        return {'success': False, 'message': f'Error retrieving job result: {str(e)}'}
 
 
 def update_job_status(db: Session, job_id: int, status: JobStatus, result: str = None, error_message: str = None):

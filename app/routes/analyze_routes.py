@@ -4,8 +4,8 @@ GitHub Repository Analysis Routes
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.schemas.analyze import AnalyzeRequest, AnalyzeResponse, JobResponse
-from app.controllers.analyze_controller import create_analysis_job, get_job_by_id
+from app.schemas.analyze import AnalyzeRequest, AnalyzeResponse, JobResponse, JobResultResponse
+from app.controllers.analyze_controller import create_analysis_job, get_job_by_id, get_job_result
 from typing import Optional
 
 router = APIRouter(
@@ -99,4 +99,29 @@ def get_job_status(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error retrieving job: {str(e)}"
+        )
+
+
+@router.get("/result/{job_id}", response_model=JobResultResponse)
+def get_job_result_endpoint(
+    job_id: str,
+    db: Session = Depends(get_db)
+):
+    """Get analysis result payload and status"""
+    try:
+        result = get_job_result(db, job_id)
+        if not result['success']:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=result['message']
+            )
+
+        return JobResultResponse(**result['data'])
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error retrieving job result: {str(e)}"
         )

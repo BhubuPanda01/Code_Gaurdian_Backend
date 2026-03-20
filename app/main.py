@@ -36,6 +36,16 @@ app.include_router(user_router)
 app.include_router(analyze_router)
 
 
+# Start worker thread on application startup (development use only)
+@app.on_event("startup")
+def start_analysis_worker():
+    import threading
+    from app.worker import run_worker
+
+    worker_thread = threading.Thread(target=run_worker, daemon=True, name="analysis_worker")
+    worker_thread.start()
+
+
 @app.get("/health")
 def health_check():
     """
